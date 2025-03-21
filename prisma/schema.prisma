@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  INTERN
+  MENTOR
+  HR
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          UserRole
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  assignedMentor   User?    @relation("MentorToIntern", fields: [mentorId], references: [id])
+  mentorId         String?
+  interns          User[]   @relation("MentorToIntern")
+  
+  assignedProjects Project[] @relation("AssignedProjects")
+  createdProjects  Project[] @relation("CreatedProjects")
+  submissions      Submission[]
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  creator     User      @relation("CreatedProjects", fields: [creatorId], references: [id])
+  creatorId   String
+  assignedTo  User?     @relation("AssignedProjects", fields: [assignedToId], references: [id])
+  assignedToId String?
+  submissions Submission[]
+}
+
+model Submission {
+  id          String    @id @default(cuid())
+  repoUrl     String
+  liveUrl     String?
+  grade       Int?
+  feedback    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  intern      User      @relation(fields: [internId], references: [id])
+  internId    String
+  project     Project   @relation(fields: [projectId], references: [id])
+  projectId   String
+}
+
